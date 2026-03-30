@@ -3,14 +3,14 @@ async function purchaseTier(tierName, coinsAmount) {
     const token = sessionStorage.getItem('cyber_token') || localStorage.getItem('cyber_token'); 
 
     if (!savedUserStr || !token) {
-        showToast('Vui lòng Đăng nhập để giao dịch!', 'error');
+        showToast('Please log in to make transactions!', 'error');
         openModal('login-modal'); return;
     }
 
     const currentUser = JSON.parse(savedUserStr);
-    if (coinsAmount === 0) return showToast(`Bạn đang ở cấp ${tierName}.`, 'success');
+    if (coinsAmount === 0) return showToast(`You are already at level ${tierName}.`, 'success');
 
-    showToast(`Đang thiết lập kết nối...`, 'success');
+    showToast(`Connecting...`, 'success');
     const newCoinBalance = (currentUser.coin || 0) + coinsAmount;
     const payload = {
         name: currentUser.name, email: currentUser.email,
@@ -29,7 +29,7 @@ async function purchaseTier(tierName, coinsAmount) {
             currentUser.coin = newCoinBalance; currentUser.role = tierName;
             const storage = localStorage.getItem('cyber_user') ? localStorage : sessionStorage;
             storage.setItem('cyber_user', JSON.stringify(currentUser));
-            showToast(`GIAO DỊCH THÀNH CÔNG!`, 'success');
+            showToast(`TRANSACTION SUCCESSFUL!`, 'success');
             applyLoginState(currentUser); 
         } else { showToast('Connection denied.', 'error'); }
     } catch (error) { showToast('Connection failed.', 'error'); }
@@ -39,15 +39,15 @@ async function handleMentorRequest(mentorId, mentorName) {
     const savedUserStr = sessionStorage.getItem('cyber_user') || localStorage.getItem('cyber_user');
     const token = sessionStorage.getItem('cyber_token') || localStorage.getItem('cyber_token'); 
 
-    if (!savedUserStr || !token) return showToast('Vui lòng Đăng nhập!', 'error');
+    if (!savedUserStr || !token) return showToast('Please log in!', 'error');
 
     const currentUser = JSON.parse(savedUserStr);
     const MENTOR_COST = 500; 
 
-    if (!currentUser.coin || currentUser.coin < MENTOR_COST) return showToast(`Không đủ ${MENTOR_COST} Coins!`, 'error');
+    if (!currentUser.coin || currentUser.coin < MENTOR_COST) return showToast(`Not enough ${MENTOR_COST} Coins!`, 'error');
 
     try {
-        showToast(`Đang kết nối tới ${mentorName}...`, 'success');
+        showToast(`Connecting to ${mentorName}...`, 'success');
         const response = await fetch(`${API_BASE_URL}/team/members/${mentorId}/request-mentor`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

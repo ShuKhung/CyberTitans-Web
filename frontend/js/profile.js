@@ -55,7 +55,6 @@ async function openProfileModal(id) {
     const modalContent = document.getElementById('profile-modal-content');
     const modalBody = document.getElementById('modal-body');
     
-    // 1. Kịch bản GUEST: Nếu không có token, yêu cầu đăng nhập
     if (!token) return showToast("Please log in to view profiles!", "error");
 
     modal.classList.remove('hidden');
@@ -70,21 +69,18 @@ async function openProfileModal(id) {
         if (!response.ok) throw new Error("Data access denied.");
         const user = await response.json(); 
         
-        // --- LOGIC PHÂN QUYỀN HIỂN THỊ NÚT BẤM ---
         const savedUserStr = sessionStorage.getItem('cyber_user') || localStorage.getItem('cyber_user');
         const currentUser = JSON.parse(savedUserStr);
         const viewerRole = currentUser.role; 
 
         let actionButtonsHTML = '';
 
-        // KỊCH BẢN 1: Tự xem Profile của chính mình
         if (currentUser.id === user.id) {
             actionButtonsHTML = `
                 <button onclick="showPage('my-profile'); closeProfileModal();" class="w-full bg-secondary text-black font-bold font-mono tracking-widest py-3.5 hover:bg-white transition-all text-[11px]">
                     // EDIT MY TACTICAL DATA
                 </button>`;
         } 
-        // KỊCH BẢN 2: Xem Profile của người khác
         else {
             actionButtonsHTML = `
                 <button onclick="handleMentorRequest(${user.id}, '${user.name}')" class="w-full bg-primary text-black font-bold font-mono tracking-widest py-3.5 hover:bg-white transition-all text-[11px] mb-2">
@@ -94,7 +90,6 @@ async function openProfileModal(id) {
                     MESSAGE
                 </button>`;
 
-            // ĐẶC QUYỀN ADMIN: Hiện thêm nút Xóa đặc vụ
             if (viewerRole === 'ADMIN' || viewerRole === 'SUPER ADMIN') {
                 actionButtonsHTML += `
                     <button onclick="adminDeleteUser(${user.id})" class="w-full mt-4 bg-red-600/20 border border-red-500/50 text-red-500 font-bold font-mono tracking-widest py-3.5 hover:bg-red-600 hover:text-white transition-all text-[11px]">
@@ -103,7 +98,6 @@ async function openProfileModal(id) {
             }
         }
 
-        // --- XỬ LÝ TIMELINE KINH NGHIỆM ---
         const defaultAvt = "https://ui-avatars.com/api/?background=222&color=fff&name=";
         const avatarUrl = user.avatar || (defaultAvt + user.name);
 

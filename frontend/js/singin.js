@@ -11,29 +11,18 @@ async function executeSignUp() {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: name,
-                username: username,
-                email: email,
-                password: password
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, username, email, password })
         });
 
         const data = await response.json();
 
         if (response.ok) {
             showToast(data.message, "success");
-            // Clear fields for security
-            document.getElementById('signup-name').value = '';
-            document.getElementById('signup-username').value = '';
-            document.getElementById('signup-email').value = '';
-            document.getElementById('signup-password').value = '';
+            pendingVerificationUsername = username;
             
-            // Automatically switch to login screen
-            switchToLogin();
+            closeModal('signup-modal');
+            openModal('otp-modal');
         } else {
             showToast(`REJECTED: ${data.message}`, "error");
         }
@@ -42,18 +31,36 @@ async function executeSignUp() {
     }
 }
 
-// Helper functions to switch between modals
-function switchToSignUp() {
-    // Assuming your login modal has id="login-modal"
-    document.getElementById('login-modal').classList.add('hidden'); 
-    document.getElementById('signup-modal').classList.remove('hidden');
-}
+async function executeOtpVerification() {
+    const otpCode = document.getElementById('otp-input').value.trim();
 
-function switchToLogin() {
-    document.getElementById('signup-modal').classList.add('hidden');
-    document.getElementById('login-modal').classList.remove('hidden');
-}
+    if (otpCode.length !== 6) {
+        return showToast("SYSTEM ERROR: Invalid code format. Must be 6 digits.", "error");
+    }
 
-function closeSignUpModal() {
-    document.getElementById('signup-modal').classList.add('hidden');
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: pendingVerificationUsername,
+                code: otpCode
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast("ACCESS GRANTED: Account activated successfully.", "success");
+            pendingVerificationUsername = "";
+            document.getElementById('otp-input').value = "";
+            
+            closeModal('otp-modal');
+            openModal('login-modal');
+        } else {
+            showToast(`DENIED: ${data.message}`, "error");
+        }
+    } catch (error) {
+        showToast("SERVER UNREACHABLE: Connection terminated.", "error");
+    }
 }

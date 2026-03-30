@@ -57,7 +57,7 @@ async function submitChangePassword() {
     const newPass = document.getElementById('new-pass').value;
     
     if (!oldPass || !newPass) {
-        return showToast("Vui lòng nhập đầy đủ mật khẩu cũ và mới!", "error");
+        return showToast("Please fill in all fields!", "error");
     }
 
     const token = sessionStorage.getItem('cyber_token') || localStorage.getItem('cyber_token');
