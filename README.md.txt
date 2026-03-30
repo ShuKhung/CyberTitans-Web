@@ -15,4 +15,3 @@
    spring.datasource.username=root
    spring.datasource.password=qqqweasd12345
 
-## Email password: spdkmmhvpqusctzj
