@@ -14,3 +14,4 @@
    spring.datasource.url=jdbc:mysql://localhost:3306/cyberweb?useSSL=false
    spring.datasource.username=root
    spring.datasource.password=qqqweasd12345
+
