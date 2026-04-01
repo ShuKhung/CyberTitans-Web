@@ -1,16 +1,17 @@
+<th:block th:fragment="navbar(active)">
 <header id="top-nav" class="fixed top-0 w-full z-50 bg-[#0e0e0e]/80 backdrop-blur-md border-b border-outline-variant/15 will-change-transform" style="transform: translateZ(0);">
   <div class="flex justify-between items-center px-6 md:px-8 h-16 max-w-full">
     
-    <button onclick="showPage('home')" class="text-xl font-bold text-[#D4AF37] tracking-widest font-headline uppercase hover:text-[#e8c84a] transition-colors">CyberTitans</button>
+    <a th:href="@{/}" class="text-xl font-bold text-[#D4AF37] tracking-widest font-headline uppercase hover:text-[#e8c84a] transition-colors block">CyberTitans</a>
     
     <nav class="hidden lg:flex items-center gap-7 font-headline text-sm tracking-tight uppercase">
-      <a href="#" onclick="showPage('home')" data-page="home" class="nav-link text-on-surface-variant hover:text-white transition-colors nav-active">Home</a>
-      <a href="#" onclick="showPage('services')" data-page="services" class="nav-link text-on-surface-variant hover:text-white transition-colors">Services</a>
-      <a href="#" onclick="showPage('projects')" data-page="projects" class="nav-link text-on-surface-variant hover:text-white transition-colors">Projects</a>
-      <a href="#" onclick="showPage('team')" data-page="team" class="nav-link text-on-surface-variant hover:text-white transition-colors">Team</a>
-      <a href="#" onclick="showPage('publications')" data-page="publications" class="nav-link text-on-surface-variant hover:text-white transition-colors">Publications</a>
-      <a href="#" onclick="showPage('faq')" data-page="faq" class="nav-link text-on-surface-variant hover:text-white transition-colors">FAQ</a>
-      <a href="#" onclick="showPage('ranking')" data-page="ranking" class="nav-link text-[#D4AF37] font-bold hover:brightness-125 transition-colors">Ranking</a>
+      <a th:href="@{/home}" data-page="home" class="nav-link text-on-surface-variant hover:text-white transition-colors">Home</a>
+      <a th:href="@{/services}" data-page="services" class="nav-link text-on-surface-variant hover:text-white transition-colors">Services</a>
+      <a th:href="@{/projects}" data-page="projects" class="nav-link text-on-surface-variant hover:text-white transition-colors">Projects</a>
+      <a th:href="@{/team}" data-page="team" class="nav-link text-on-surface-variant hover:text-white transition-colors">Team</a>
+      <a th:href="@{/publications}" data-page="publications" class="nav-link text-on-surface-variant hover:text-white transition-colors">Publications</a>
+      <a th:href="@{/faq}" data-page="faq" class="nav-link text-on-surface-variant hover:text-white transition-colors">FAQ</a>
+      <a th:href="@{/ranking}" data-page="ranking" class="nav-link text-[#D4AF37] font-bold hover:brightness-125 transition-colors">Ranking</a>
     </nav>
     
     <div class="flex items-center gap-3">
@@ -22,7 +23,7 @@
 
       <div id="nav-user" class="hidden items-center gap-5">
         
-        <div class="flex items-center gap-3 cursor-pointer group" onclick="showPage('my-profile')">
+        <a th:href="@{/profile}" data-page="profile" class="nav-link flex items-center gap-3 cursor-pointer group">
             <div class="flex flex-col items-end">
                 <div class="flex items-center gap-2">
                     <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
@@ -36,8 +37,9 @@
             </div>
             
             <div class="w-7 h-7 bg-primary flex items-center justify-center border border-white/20 group-hover:border-primary transition-colors shadow-[0_0_10px_rgba(77,255,136,0.2)]">
-                </div>
-        </div>
+                <!-- User Avatar icon could go here -->
+            </div>
+        </a>
 
         <button onclick="logout()" title="Disconnect" class="text-on-surface-variant hover:text-[#ff4d4d] transition-colors flex items-center justify-center border-l border-white/10 pl-5">
             <span class="material-symbols-outlined text-[18px]">logout</span>
@@ -52,8 +54,9 @@
   </div>
 
   <div id="mobile-menu" class="hidden lg:hidden bg-surface-container-low border-t border-outline-variant/10 px-6 py-4 space-y-3">
-    <a href="#" onclick="showPage('home'); toggleMobileMenu()" class="block text-sm font-headline uppercase text-on-surface-variant hover:text-primary py-2">Home</a>
-    <a href="#" onclick="showPage('services'); toggleMobileMenu()" class="block text-sm font-headline uppercase text-on-surface-variant hover:text-primary py-2">Services</a>
-    <a href="#" onclick="showPage('ranking'); toggleMobileMenu()" class="block text-sm font-headline uppercase text-[#D4AF37] py-2">Ranking</a>
+    <a th:href="@{/home}" class="block text-sm font-headline uppercase text-on-surface-variant hover:text-primary py-2">Home</a>
+    <a th:href="@{/services}" class="block text-sm font-headline uppercase text-on-surface-variant hover:text-primary py-2">Services</a>
+    <a th:href="@{/ranking}" class="block text-sm font-headline uppercase text-[#D4AF37] py-2">Ranking</a>
   </div>
 </header>
+</th:block>

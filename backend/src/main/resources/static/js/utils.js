@@ -1,24 +1,3 @@
-async function includeHTML() {
-    const elements = document.querySelectorAll('[include-html]');
-    for (let el of elements) {
-        const file = el.getAttribute('include-html');
-        try {
-            const response = await fetch(file + '?v=' + new Date().getTime());
-            if (response.ok) el.outerHTML = await response.text();
-        } catch (err) { console.error("[SYSTEM] Lỗi nạp HTML:", err); }
-    }
-    initializeApp();
-}
-
-function showPage(name) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const el = document.getElementById('page-' + name);
-    if (el) el.classList.add('active');
-    document.querySelectorAll('.nav-link').forEach(a => a.classList.toggle('nav-active', a.dataset.page === name));
-    if (name === 'my-profile') loadOperativeData();
-    window.scrollTo(0, 0);
-}
-
 
 function showToast(msg, type = 'success') {
     const t = document.getElementById('toast');
