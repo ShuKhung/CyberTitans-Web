@@ -1,0 +1,86 @@
+<div id="member-panel-backdrop" class="modal-overlay hidden" onclick="closeMemberPanel()"></div>
+<div id="member-panel" class="side-panel hidden">
+  <div class="panel-header">
+    <h2>Member Profile: <span id="panel-name" class="text-primary">—</span></h2>
+    <button onclick="closeMemberPanel()" class="icon-btn"><span class="material-symbols-outlined">close</span></button>
+  </div>
+</div>
+
+<div id="login-modal" class="modal-overlay hidden" onclick="handleBackdropClick(event, 'login-modal')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button onclick="closeModal('login-modal')" class="close-btn"><span class="material-symbols-outlined">close</span></button>
+    <header class="modal-header">
+      <div class="status-indicator"><span class="dot primary"></span> SECURE_HANDSHAKE.EXE</div>
+      <h2>Initialize Access</h2>
+    </header>
+    <div class="form-group">
+      <label class="cyber-label">Identity Identifier</label>
+      <input type="text" id="login-user" class="cyber-input" placeholder="username_or_email"/>
+    </div>
+    <div class="form-group">
+      <label class="cyber-label">Pass-Key</label>
+      <input type="password" id="login-pass" class="cyber-input" placeholder="••••••••"/>
+    </div>
+    <div class="form-actions-row">
+      <label class="cyber-checkbox"><input type="checkbox" id="keep-persistent"> Keep Persistent</label>
+      <a href="#" onclick="switchToRecovery(); return false;" class="cyber-link">Recovery Protocol?</a>
+    </div>
+    <button onclick="doLogin()" class="cyber-btn primary-btn mt-4">Execute Login <span class="material-symbols-outlined">login</span></button>
+    <div class="modal-footer">
+      Don't have an account? <a href="#" onclick="switchToSignUp(); return false;" class="cyber-link highlight">Sign Up</a>
+    </div>
+  </div>
+</div>
+
+<div id="signup-modal" class="modal-overlay hidden" onclick="handleBackdropClick(event, 'signup-modal')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button onclick="closeSignUpModal()" class="close-btn"><span class="material-symbols-outlined">close</span></button>
+    <header class="modal-header">
+      <div class="status-indicator"><span class="dot primary"></span> RECRUITMENT_PROTOCOL.EXE</div>
+      <h2>Initialize Operative</h2>
+    </header>
+    <div class="form-group"><label class="cyber-label">Designation</label><input type="text" id="signup-name" class="cyber-input"></div>
+    <div class="form-group"><label class="cyber-label">Identifier</label><input type="text" id="signup-username" class="cyber-input"></div>
+    <div class="form-group"><label class="cyber-label">Comms Link</label><input type="email" id="signup-email" class="cyber-input"></div>
+    <div class="form-group"><label class="cyber-label">Pass-Key</label><input type="password" id="signup-password" class="cyber-input"></div>
+    <button onclick="executeSignUp()" class="cyber-btn primary-btn mt-4">Execute Registration <span class="material-symbols-outlined">how_to_reg</span></button>
+    <div class="modal-footer">Already registered? <a href="#" onclick="switchToLogin()" class="cyber-link highlight">Sign In</a></div>
+  </div>
+</div>
+
+<div id="otp-modal" class="modal-overlay hidden">
+  <div class="modal-box text-center">
+    <p class="status-text primary animate-pulse">// SECURITY_CLEARANCE_REQUIRED</p>
+    <h3 class="modal-title">VERIFY IDENTITY</h3>
+    <input type="text" id="otp-input" maxlength="6" placeholder="000000" class="cyber-input otp-input mb-4">
+    <button onclick="executeOtpVerification()" class="cyber-btn primary-btn">Confirm Authorization</button>  
+  </div>
+</div>
+
+<div id="recovery-request-modal" class="modal-overlay hidden">
+  <div class="modal-box danger-border">
+    <p class="status-text danger animate-pulse">// EMERGENCY_RECOVERY_PROTOCOL</p>
+    <h3 class="modal-title">INITIATE RECOVERY</h3>
+    <div class="form-group"><label class="cyber-label danger">Identifier</label><input type="text" id="recovery-username" class="cyber-input danger-focus"></div>
+    <div class="form-group"><label class="cyber-label danger">Comms Link</label><input type="email" id="recovery-email" class="cyber-input danger-focus mb-4"></div>
+    <div class="btn-group">
+      <button onclick="requestRecoveryOtp()" class="cyber-btn danger-btn">Transmit Code</button>
+      <button onclick="closeRecoveryModal()" class="cyber-btn ghost-btn">Abort</button>
+    </div>
+  </div>
+</div>
+
+<div id="recovery-reset-modal" class="modal-overlay hidden">
+  <div class="modal-box danger-border text-center">
+    <h3 class="modal-title">VERIFY & OVERRIDE</h3>
+    <div class="form-group text-left"><label class="cyber-label danger">Recovery Code</label><input type="text" id="recovery-otp" maxlength="6" class="cyber-input otp-input danger-focus"></div>
+    <div class="form-group text-left"><label class="cyber-label danger">New Pass-Key</label><input type="password" id="recovery-new-pass" class="cyber-input danger-focus mb-4"></div>
+    <button onclick="executePasswordReset()" class="cyber-btn danger-btn">Confirm Override</button>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 right-5 z-[9999] bg-[#111] px-6 py-4 flex items-center gap-4 transition-all duration-300">
+  <span id="toast-dot" class="w-2 h-2 rounded-full animate-pulse bg-current"></span>
+  <span id="toast-text" class="text-sm font-mono text-white tracking-widest uppercase"></span>
+</div>
+
