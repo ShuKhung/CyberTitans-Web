@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', includeHTML);
+document.addEventListener('DOMContentLoaded', initializeApp);
 
 function initializeApp() {
     console.log("[SYSTEM] Starting CyberTitans...");

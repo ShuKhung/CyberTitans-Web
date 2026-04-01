@@ -8,7 +8,7 @@ public class WebController {
 
     @GetMapping("/")
     public String index() {
-        return "index";
+        return "pages/home";
     }
 
     @GetMapping("/home")
@@ -61,14 +61,4 @@ public class WebController {
         return "pages/team";
     }
 
-    // --- Hỗ trợ lấy file HTML động cho JS (JS Fetch API) ---
-    @GetMapping("/components/{name}.html")
-    public String getComponent(@org.springframework.web.bind.annotation.PathVariable String name) {
-        return "components/" + name;
-    }
-
-    @GetMapping("/pages/{name}.html")
-    public String getPageHtml(@org.springframework.web.bind.annotation.PathVariable String name) {
-        return "pages/" + name;
-    }
 }

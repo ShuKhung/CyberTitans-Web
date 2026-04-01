@@ -1,5 +1,7 @@
+<html th:replace="~{layout/layout :: page(title='CyberTitans — Admin', active='admin', headExtra=~{}, content=~{::content}, scriptsExtra=~{})}" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="content">
 
-<div id="page-admin" class="page pt-16">
+<div id="page-admin" class="pt-16">
   <main class="max-w-7xl mx-auto px-6 md:px-8 py-16">
     <div class="flex items-center justify-between mb-12">
       <div>
@@ -7,7 +9,7 @@
         <h1 class="font-headline text-3xl font-bold">Member Management</h1>
       </div>
       <div class="flex items-center gap-3">
-        <button onclick="showPage('permissions')" class="px-4 py-2 border border-outline-variant/30 text-xs font-mono uppercase tracking-widest hover:bg-surface-bright transition-colors">Permissions Matrix</button>
+        <button href="/permissions" class="px-4 py-2 border border-outline-variant/30 text-xs font-mono uppercase tracking-widest hover:bg-surface-bright transition-colors">Permissions Matrix</button>
         <button onclick="showToast('Export initiated')" class="px-4 py-2 bg-[#D4AF37] text-black text-xs font-bold uppercase tracking-widest hover:bg-[#e8c84a] transition-all">Export Data</button>
       </div>
     </div>
@@ -47,3 +49,6 @@
     </div>
   </main>
 </div>
+
+</div>
+</html>
