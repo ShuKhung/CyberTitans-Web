@@ -26,6 +26,9 @@ public class Project {
     @Column(length = 500)
     private String technologies; 
 
+    @Column(name = "github_url", length = 500)
+    private String githubUrl;
+
     @Column(columnDefinition = "decimal(15,2) default '0.00'")
     private Double price = 0.0;
 
@@ -63,11 +66,11 @@ public class Project {
 
     private Short status = 1;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -109,6 +112,9 @@ public class Project {
     public String getTechnologies() { return technologies; }
     public void setTechnologies(String technologies) { this.technologies = technologies; }
 
+    public String getGithubUrl() { return githubUrl; }
+    public void setGithubUrl(String githubUrl) { this.githubUrl = githubUrl; }
+
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
 
@@ -130,8 +136,25 @@ public class Project {
     public Short getStatus() { return status; }
     public void setStatus(Short status) { this.status = status; }
 
+    public String getCodeFile() { return codeFile; }
+    public void setCodeFile(String codeFile) { this.codeFile = codeFile; }
+
+    public String getFilePackage() { return filePackage; }
+    public void setFilePackage(String filePackage) { this.filePackage = filePackage; }
+
+    public String getDemoUrl() { return demoUrl; }
+    public void setDemoUrl(String demoUrl) { this.demoUrl = demoUrl; }
+
+    public Integer getDownloadCount() { return downloadCount; }
+    public void setDownloadCount(Integer downloadCount) { this.downloadCount = downloadCount; }
+
+    public String getTeamId() { return teamId; }
+    public void setTeamId(String teamId) { this.teamId = teamId; }
+
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

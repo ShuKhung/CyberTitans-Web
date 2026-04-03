@@ -1,142 +1,396 @@
-<html th:replace="~{layout/layout :: page(title='CyberTitans — Projects', active='projects', headExtra=~{}, content=~{::content}, scriptsExtra=~{})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html th:replace="~{layout/layout :: page(title='CyberTitans — Projects', active='projects', headExtra=~{::headExtra}, content=~{::content}, scriptsExtra=~{::scriptsExtra})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- Extra head styles for modal -->
+<th:block th:fragment="headExtra">
+<style>
+  /* ── Modal Overlay ── */
+  #project-modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  #project-modal-overlay.open {
+    opacity: 1; pointer-events: all;
+  }
+
+  /* ── Modal Box ── */
+  #project-modal {
+    position: relative;
+    width: 90vw; max-width: 780px; max-height: 90vh;
+    background: #0c0f14;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 0 60px rgba(0,255,100,0.06), 0 0 0 1px rgba(0,255,100,0.04);
+    overflow-y: auto;
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,255,100,0.2) transparent;
+  }
+  #project-modal-overlay.open #project-modal {
+    transform: translateY(0) scale(1);
+  }
+
+  /* ── Modal image banner ── */
+  #modal-image-wrap {
+    width: 100%; height: 230px;
+    background: linear-gradient(135deg,#0a1a10,#060a0c);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  #modal-image-wrap img {
+    max-height: 160px; max-width: 60%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(0,255,100,0.18));
+    transition: transform 0.4s ease;
+  }
+  #modal-image-wrap img:hover { transform: scale(1.06); }
+
+  /* ── Scanner line animation ── */
+  @keyframes scanline {
+    0% { top:-10%; }
+    100% { top:110%; }
+  }
+  .modal-scanner {
+    position: absolute; left:0; right:0; height:2px;
+    background: linear-gradient(transparent, rgba(0,255,100,0.35), transparent);
+    animation: scanline 3s linear infinite;
+  }
+
+  /* ── Tech badge ── */
+  .modal-tech-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.55);
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.04);
+  }
+
+  /* ── GitHub button ── */
+  #modal-github-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 28px;
+    background: rgba(0,255,100,0.08);
+    border: 1px solid rgba(0,255,100,0.4);
+    color: #00ff64;
+    font-family: monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  #modal-github-btn:hover {
+    background: rgba(0,255,100,0.15);
+    box-shadow: 0 0 20px rgba(0,255,100,0.2);
+    transform: translateY(-1px);
+  }
+  #modal-github-btn svg { width: 18px; height: 18px; fill: #00ff64; }
+
+  /* ── Close button ── */
+  #modal-close-btn {
+    position: absolute; top: 16px; right: 16px; z-index: 10;
+    width: 34px; height: 34px;
+    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  #modal-close-btn:hover { color: #00ff64; border-color: rgba(0,255,100,0.4); }
+
+  /* ── Stat item ── */
+  .modal-stat { display: flex; flex-direction: column; gap: 3px; }
+  .modal-stat-value { font-family: monospace; font-size: 20px; color: #00ff64; font-weight: 700; }
+  .modal-stat-label { font-family: monospace; font-size: 9px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.15em; }
+
+  /* ── Card hover ── */
+  .project-card { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
+  .project-card:hover {
+    border-color: rgba(0,255,100,0.3);
+    box-shadow: 0 0 30px rgba(0,255,100,0.07);
+    transform: translateY(-3px);
+    cursor: pointer;
+  }
+</style>
+</th:block>
+
+<!-- ══════════════════════════════════════════ PAGE CONTENT ══════════════════════════════════════════ -->
 <div th:fragment="content">
 <div id="page-projects" class="pt-24 pb-20 px-6 md:px-8 max-w-[1600px] mx-auto">
-  
+
   <!-- Tactical Header -->
   <header class="mb-12 border-l-[6px] border-primary pl-8 py-1">
     <p class="font-mono text-primary text-xs tracking-[0.5em] mb-2 uppercase opacity-70">/ROOT/PROJECTS_VAULT</p>
     <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter text-white uppercase">Tactical Deployments</h1>
   </header>
 
-  <div class="flex flex-col lg:flex-row gap-10">
-    
-    <!-- Main Content: Project Grid -->
-    <div class="flex-grow order-1 lg:order-2">
-      <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Dynamic Project Cards -->
-        <th:block th:each="project : ${projects}">
-          <div class="hack-card bg-surface-container-low/20 backdrop-blur-sm border border-white/5 relative group flex flex-col h-full overflow-hidden project-card"
-               th:data-name="${project.name != null ? project.name.toLowerCase() : ''}"
-               th:data-tech="${project.technologies != null ? project.technologies.toLowerCase() : ''}">
-            
-            <!-- Thumbnail Area -->
-            <div class="relative w-full h-52 overflow-hidden bg-black/60 border-b border-white/5">
-                <img th:if="${project.image != null}" th:src="@{${'/' + project.image}}" th:alt="${project.name}" 
-                     class="card-banner-img w-full h-full object-cover opacity-60">
-                <div th:unless="${project.image != null}" class="w-full h-full flex items-center justify-center bg-primary/5">
-                    <span class="material-symbols-outlined text-primary/10 text-7xl">deployed_code</span>
-                </div>
-                <div class="scanner"></div>
-            </div>
+  <!-- Project Grid -->
+  <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 
-            <div class="p-6 flex flex-col flex-grow">
-                <!-- Inline Tags -->
-                <div class="flex flex-wrap gap-2 mb-5">
-                    <span class="px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary font-mono text-[10px] uppercase tracking-wider" 
-                          th:text="${project.category != null ? project.category.name : 'Web Development'}">WEB DEVELOPMENT</span>
-                    <th:block th:if="${project.technologies != null}">
-                      <th:block th:each="tag, iter : ${#strings.arraySplit(project.technologies, ',')}">
-                          <span th:if="${iter.index < 2}" class="px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 font-mono text-[10px] uppercase tracking-wider" 
-                                th:text="${tag.trim()}">TECH</span>
-                      </th:block>
-                    </th:block>
-                </div>
+    <th:block th:each="project : ${projects}">
+      <!-- Card — click opens modal -->
+      <div class="project-card hack-card bg-surface-container-low/20 backdrop-blur-sm border border-white/5 relative group flex flex-col h-full overflow-hidden"
+           th:onclick="'openProjectModal(' + ${project.id} + ')'"
+           th:data-id="${project.id}"
+           th:data-name="${project.name}"
+           th:data-slug="${project.slug}"
+           th:data-description="${project.description}"
+           th:data-image="${project.image}"
+           th:data-technologies="${project.technologies}"
+           th:data-github="${project.githubUrl}"
+           th:data-category="${project.category != null ? project.category.name : 'General'}"
+           th:data-rating="${project.ratingAvg}"
+           th:data-rating-count="${project.ratingCount}"
+           th:data-views="${project.views}"
+           th:data-published="${project.publishedAt}">
 
-                <h2 class="text-2xl font-headline font-bold text-white mb-3 group-hover:text-primary transition-colors leading-tight" 
-                    th:text="${project.name != null ? project.name : 'Untitled Deployment'}">Project Name</h2>
-                
-                <p class="text-white/40 text-sm leading-relaxed mb-8 font-body line-clamp-3" 
-                   th:text="${project.description != null ? project.description : 'Tactical dossier details unavailable.'}">
-                  Project Description...
-                </p>
-        
-                <!-- Footer Status Line -->
-                <div class="mt-auto pt-5 border-t border-white/5 flex items-center justify-between">
-                    <span class="font-mono text-[10px] text-white/20 uppercase tracking-[0.2em]" 
-                          th:text="${project.id != null ? 'V' + (project.id % 5 + 1) + '.' + (project.id % 10) + '.0_STABLE' : 'V1.0.0_STABLE'}">V2.4.0_STABLE</span>
-                    
-                    <div class="text-primary opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </div>
-                </div>
-            </div>
+        <!-- Thumbnail -->
+        <div class="relative w-full h-52 overflow-hidden bg-black/60 border-b border-white/5">
+          <img th:if="${project.image != null and #strings.startsWith(project.image, 'http')}"
+               th:src="${project.image}"
+               th:alt="${project.name}"
+               class="w-full h-full object-contain p-8 opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500">
+          <div th:unless="${project.image != null and #strings.startsWith(project.image, 'http')}"
+               class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-black">
+            <span class="material-symbols-outlined text-primary/20 text-8xl">deployed_code</span>
           </div>
-        </th:block>
-      </div>
-    </div>
+          <div class="scanner"></div>
 
-    <!-- Sidebar: Controls -->
-    <aside class="w-full lg:w-[360px] order-1 lg:order-1 space-y-8">
-      
-      <!-- Search Terminal -->
-      <div class="terminal-block">
-          <div class="title">SEARCH_TERMINAL</div>
-          <form th:action="@{/projects}" method="get" class="cyber-search-container">
-              <input type="text" name="keyword" th:value="${searchKeyword}" 
-                     placeholder="QUERY_SYSTEM..." class="cyber-search-input">
-              <span class="material-symbols-outlined cyber-search-icon">terminal</span>
-          </form>
-      </div>
+          <!-- GitHub badge -->
+          <div th:if="${project.githubUrl != null}"
+               class="absolute top-3 right-3 flex items-center gap-1.5 bg-black/70 border border-white/10 px-2.5 py-1">
+            <svg viewBox="0 0 24 24" class="w-3 h-3 fill-white/40"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span class="font-mono text-[9px] text-white/35 uppercase tracking-wider">Open Source</span>
+          </div>
+        </div>
 
-      <!-- Categories -->
-      <div class="terminal-block">
-          <div class="title">CATEGORIES</div>
-          <div class="flex flex-col gap-1">
-              <a th:href="@{/projects}" class="cat-item" th:classappend="${searchKeyword == null or searchKeyword == ''} ? 'active' : ''">
-                  <span>Show All</span>
-                  <span class="count" th:text="${projects.size()}">0</span>
-              </a>
-              <th:block th:each="entry : ${categoryCounts}">
-                  <a th:href="@{/projects(keyword=${entry.key})}" class="cat-item" 
-                     th:classappend="${searchKeyword == entry.key} ? 'active' : ''">
-                      <span th:text="${entry.key}">Category</span>
-                      <span class="count" th:text="${entry.value}">0</span>
-                  </a>
+        <div class="p-6 flex flex-col flex-grow">
+          <!-- Tags -->
+          <div class="flex flex-wrap gap-2 mb-5">
+            <span class="px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary font-mono text-[10px] uppercase tracking-wider"
+                  th:text="${project.category != null ? project.category.name : 'General'}">CATEGORY</span>
+            <th:block th:if="${project.technologies != null}">
+              <th:block th:each="tag, iter : ${#strings.arraySplit(project.technologies, ',')}">
+                <span th:if="${iter.index < 2}"
+                      class="px-2 py-0.5 bg-white/5 border border-white/10 text-white/50 font-mono text-[10px] uppercase tracking-wider"
+                      th:text="${tag.trim()}">TECH</span>
               </th:block>
+            </th:block>
           </div>
-      </div>
 
-      <!-- Tech Stack -->
-      <div class="terminal-block">
-          <div class="title">TECH_STACK</div>
-          <div class="flex flex-wrap gap-2">
-              <th:block th:each="tech : ${techStack}">
-                  <a th:href="@{/projects(keyword=${tech})}" 
-                     class="px-3 py-1 bg-black border border-white/10 text-white/60 font-mono text-[11px] hover:border-primary hover:text-primary transition-colors uppercase"
-                     th:text="${tech}">Tech</a>
-              </th:block>
+          <!-- Title -->
+          <h2 class="text-xl font-headline font-bold text-white mb-3 group-hover:text-primary transition-colors leading-tight"
+              th:text="${project.name != null ? project.name : 'Untitled Deployment'}">Project Name</h2>
+
+          <!-- Description -->
+          <p class="text-white/40 text-sm leading-relaxed mb-8 font-body line-clamp-3"
+             th:text="${project.description != null ? project.description : 'Tactical dossier details unavailable.'}">
+            Project Description...
+          </p>
+
+          <!-- Footer -->
+          <div class="mt-auto pt-5 border-t border-white/5 flex items-center justify-between">
+            <div class="flex flex-col gap-1">
+              <span class="font-mono text-[10px] text-white/20 uppercase tracking-[0.15em]"
+                    th:text="${project.publishedAt != null ? project.publishedAt : 'N/A'}">PUBLISHED</span>
+              <div class="flex items-center gap-1" th:if="${project.ratingAvg != null and project.ratingAvg > 0}">
+                <span class="text-[#D4AF37] text-xs">★</span>
+                <span class="font-mono text-[10px] text-[#D4AF37]" th:text="${#numbers.formatDecimal(project.ratingAvg, 1, 2)}">4.50</span>
+                <span class="font-mono text-[10px] text-white/20" th:text="'(' + ${project.ratingCount} + ')'">( 86)</span>
+              </div>
+            </div>
+            <div class="text-primary opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </div>
           </div>
+        </div>
       </div>
+    </th:block>
 
-      <!-- Auth Status -->
-      <div class="auth-panel">
-          <span class="material-symbols-outlined shield-watermark">shield</span>
-          <div class="status-indicator">AUTH_STATUS</div>
-          <div class="flex items-center gap-2 mb-1">
-              <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-              <span class="text-primary font-mono text-[11px]">System Operational</span>
-          </div>
-          <p class="status-text mt-1">All project modules synchronized. Last uplink: <span th:text="${#temporals.format(#temporals.createNow(), 'HH:mm')}">16:00</span> local time.</p>
+    <!-- Empty state -->
+    <th:block th:if="${projects == null or projects.isEmpty()}">
+      <div class="col-span-3 py-24 text-center">
+        <span class="material-symbols-outlined text-white/10 text-6xl block mb-4">search_off</span>
+        <p class="font-mono text-white/30 text-sm uppercase tracking-widest">No projects found in the vault.</p>
       </div>
-
-    </aside>
+    </th:block>
   </div>
 
-  <script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', () => {
-        const searchInput = document.querySelector('.cyber-search-input');
-        if (searchInput) {
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    searchInput.closest('form').submit();
-                }
-            });
-        }
-    });
-  </script>
+</div><!-- /page-projects -->
 
-</div>
-</div>
-</div>
+<!-- ══════════════════════════════════════════ PROJECT MODAL ══════════════════════════════════════════ -->
+<div id="project-modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="project-modal">
+
+    <!-- Close button -->
+    <button id="modal-close-btn" onclick="closeProjectModal()" title="Close">✕</button>
+
+    <!-- Image banner -->
+    <div id="modal-image-wrap">
+      <div class="modal-scanner"></div>
+      <img id="modal-img" src="" alt="" style="display:none;">
+      <span id="modal-img-placeholder" class="material-symbols-outlined text-primary/20 text-8xl" style="display:none;">deployed_code</span>
+    </div>
+
+    <!-- Body -->
+    <div class="p-8">
+
+      <!-- Category + tech tags -->
+      <div id="modal-tags" class="flex flex-wrap gap-2 mb-6"></div>
+
+      <!-- Title -->
+      <h2 id="modal-title" class="text-3xl font-headline font-bold text-white mb-4 leading-tight uppercase"></h2>
+
+      <!-- Stats row -->
+      <div class="flex gap-8 mb-6 pb-6 border-b border-white/5">
+        <div class="modal-stat">
+          <span id="modal-rating" class="modal-stat-value">—</span>
+          <span class="modal-stat-label">Rating</span>
+        </div>
+        <div class="modal-stat">
+          <span id="modal-rating-count" class="modal-stat-value">—</span>
+          <span class="modal-stat-label">Reviews</span>
+        </div>
+        <div class="modal-stat">
+          <span id="modal-views" class="modal-stat-value">—</span>
+          <span class="modal-stat-label">Views</span>
+        </div>
+        <div class="modal-stat">
+          <span id="modal-published" class="modal-stat-value" style="font-size:14px; padding-top:4px;">—</span>
+          <span class="modal-stat-label">Published</span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <p id="modal-description" class="text-white/60 text-sm leading-relaxed mb-8 font-body"></p>
+
+      <!-- GitHub CTA -->
+      <div id="modal-github-wrap">
+        <a id="modal-github-btn" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Check on GitHub
+        </a>
+      </div>
+
+    </div><!-- /body -->
+  </div><!-- /modal -->
+</div><!-- /overlay -->
+
+</div><!-- /fragment -->
+
+<!-- ══════════════════════════════════════════ SCRIPTS ══════════════════════════════════════════ -->
+<th:block th:fragment="scriptsExtra">
+<script>
+  // ── Build lookup map from data attributes ──
+  const projectCards = document.querySelectorAll('.project-card[data-id]');
+  const projectMap = {};
+  projectCards.forEach(card => {
+    const id = card.dataset.id;
+    projectMap[id] = {
+      name:        card.dataset.name        || '',
+      description: card.dataset.description || '',
+      image:       card.dataset.image       || '',
+      technologies:card.dataset.technologies|| '',
+      github:      card.dataset.github      || '',
+      category:    card.dataset.category    || '',
+      rating:      card.dataset.rating      || '',
+      ratingCount: card.dataset.ratingCount || '',
+      views:       card.dataset.views       || '',
+      published:   card.dataset.published   || '',
+    };
+  });
+
+  // ── Open modal ──
+  function openProjectModal(id) {
+    const p = projectMap[String(id)];
+    if (!p) return;
+
+    // title
+    document.getElementById('modal-title').textContent = p.name;
+
+    // image
+    const img     = document.getElementById('modal-img');
+    const imgPh   = document.getElementById('modal-img-placeholder');
+    if (p.image && p.image.startsWith('http')) {
+      img.src = p.image;
+      img.alt = p.name;
+      img.style.display   = '';
+      imgPh.style.display = 'none';
+    } else {
+      img.style.display   = 'none';
+      imgPh.style.display = '';
+    }
+
+    // stats
+    document.getElementById('modal-rating').textContent       = p.rating      ? '★ ' + parseFloat(p.rating).toFixed(2) : '—';
+    document.getElementById('modal-rating-count').textContent = p.ratingCount ? Number(p.ratingCount).toLocaleString() : '—';
+    document.getElementById('modal-views').textContent        = p.views       ? Number(p.views).toLocaleString() : '—';
+    document.getElementById('modal-published').textContent    = p.published   || '—';
+
+    // description
+    document.getElementById('modal-description').textContent = p.description || 'No description available.';
+
+    // tags
+    const tagsEl = document.getElementById('modal-tags');
+    tagsEl.innerHTML = '';
+    // category tag
+    const catSpan = document.createElement('span');
+    catSpan.className = 'px-2 py-0.5 bg-primary/10 border border-primary/30 text-primary font-mono text-[10px] uppercase tracking-wider';
+    catSpan.textContent = p.category || 'General';
+    tagsEl.appendChild(catSpan);
+    // tech tags
+    if (p.technologies) {
+      p.technologies.split(',').forEach(tech => {
+        const t = tech.trim();
+        if (!t) return;
+        const tSpan = document.createElement('span');
+        tSpan.className = 'modal-tech-badge';
+        tSpan.textContent = t;
+        tagsEl.appendChild(tSpan);
+      });
+    }
+
+    // github button
+    const wrap = document.getElementById('modal-github-wrap');
+    const btn  = document.getElementById('modal-github-btn');
+    if (p.github) {
+      btn.href       = p.github;
+      wrap.style.display = '';
+    } else {
+      wrap.style.display = 'none';
+    }
+
+    // open overlay
+    document.getElementById('project-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // ── Close modal ──
+  function closeProjectModal() {
+    document.getElementById('project-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ── Click outside modal box to close ──
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('project-modal-overlay')) {
+      closeProjectModal();
+    }
+  }
+
+  // ── ESC key to close ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeProjectModal();
+  });
+</script>
+</th:block>
+
 </html>

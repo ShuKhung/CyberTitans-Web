@@ -1,6 +1,8 @@
 package com.Se2.CyberWebApp.controller;
 
+import com.Se2.CyberWebApp.entity.Project;
 import com.Se2.CyberWebApp.entity.User;
+import com.Se2.CyberWebApp.service.ProjectService;
 import com.Se2.CyberWebApp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ public class AdminApiController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ProjectService projectService;
 
     @GetMapping("/users")
     public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
@@ -88,5 +93,36 @@ public class AdminApiController {
                     .body(Map.of("message", e.getReason()));
         }
     }
-}
 
+    // --- Project Management ---
+
+    /** Fetch all projects currently in PENDING state (status = 2). */
+    @GetMapping("/projects/pending")
+    public ResponseEntity<List<Map<String, Object>>> getPendingProjects() {
+        List<Project> pending = projectService.getPendingProjects();
+        List<Map<String, Object>> response = pending.stream().map(p -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", p.getId());
+            map.put("name", p.getName());
+            map.put("slug", p.getSlug());
+            map.put("techStack", p.getTechnologies());
+            map.put("teamId", p.getTeamId());
+            map.put("githubUrl", p.getGithubUrl());
+            map.put("submittedAt", p.getCreatedAt()); 
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/projects/{id}/approve")
+    public ResponseEntity<?> approveProject(@PathVariable Integer id) {
+        projectService.updateProjectStatus(id, (short) 1);
+        return ResponseEntity.ok(Map.of("message", "Project approved. It is now live on the public terminal."));
+    }
+
+    @PostMapping("/projects/{id}/reject")
+    public ResponseEntity<?> rejectProject(@PathVariable Integer id) {
+        projectService.updateProjectStatus(id, (short) 0);
+        return ResponseEntity.ok(Map.of("message", "Project rejected. Archiving records."));
+    }
+}
