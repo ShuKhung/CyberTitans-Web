@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import java.util.Map;
@@ -30,16 +31,34 @@ public class ProjectService {
     }
 
     public List<Project> searchProjects(String keyword) {
-        logger.debug("[SERVICE] Searching projects with keyword: {}", keyword);
+        logger.debug("[SERVICE] Searching approved projects with keyword: {}", keyword);
+        // Only return approved projects (status = 1)
         if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllProjects();
+            return projectRepository.findByStatus((short) 1);
         }
-        return projectRepository.findByNameContainingIgnoreCaseOrTechnologiesContainingIgnoreCase(keyword, keyword);
+        return projectRepository.findByStatusAndNameContainingIgnoreCaseOrStatusAndTechnologiesContainingIgnoreCase(
+                (short) 1, keyword, (short) 1, keyword
+        );
+    }
+
+    public List<Project> getPendingProjects() {
+        logger.debug("[SERVICE] Fetching pending projects (status = 2)");
+        return projectRepository.findByStatus((short) 2);
+    }
+
+    @Transactional
+    public void updateProjectStatus(Integer id, Short status) {
+        logger.info("[SERVICE] Updating project ID {} to status {}", id, status);
+        projectRepository.findById(id).ifPresent(p -> {
+            p.setStatus(status);
+            projectRepository.save(p);
+        });
     }
 
     public List<String> getUniqueTechStack() {
-        logger.debug("[SERVICE] Generating unique tech stack list");
-        List<Project> allProjects = projectRepository.findAll();
+        logger.debug("[SERVICE] Generating unique tech stack list (Approved only)");
+        // Only consider approved projects
+        List<Project> allProjects = projectRepository.findByStatus((short) 1);
         if (allProjects == null) return List.of();
         
         return allProjects.stream()
@@ -54,8 +73,9 @@ public class ProjectService {
     }
 
     public Map<String, Long> getCategoryCounts() {
-        logger.debug("[SERVICE] Generating category counts map");
-        List<Project> allProjects = projectRepository.findAll();
+        logger.debug("[SERVICE] Generating category counts map (Approved only)");
+        // Only consider approved projects
+        List<Project> allProjects = projectRepository.findByStatus((short) 1);
         if (allProjects == null) return Map.of();
 
         return allProjects.stream()
@@ -69,6 +89,10 @@ public class ProjectService {
                         return "Uncategorized";
                     }
                 }, Collectors.counting()));
+    }
+
+    public Optional<Project> getProjectBySlug(String slug) {
+        return projectRepository.findBySlug(slug);
     }
 
     public Project saveProject(Project project) {

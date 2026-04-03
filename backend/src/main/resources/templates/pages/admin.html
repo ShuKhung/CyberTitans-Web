@@ -4,17 +4,27 @@
 <div id="page-admin" class="page active pt-16">
   <main class="max-w-7xl mx-auto px-6 md:px-8 py-16">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-12">
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-white/10 mb-8 overflow-x-auto no-scrollbar">
+      <button onclick="switchAdminTab('users')" id="tab-users" class="px-6 py-3 border-b-2 border-primary text-primary font-mono text-[10px] uppercase tracking-widest transition-all">
+        [01] Member Registry
+      </button>
+      <button onclick="switchAdminTab('projects')" id="tab-projects" class="px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-white font-mono text-[10px] uppercase tracking-widest transition-all">
+        [02] Project Requests
+      </button>
+    </div>
+
+    <!-- Header (Dynamic Title) -->
+    <div class="flex items-center justify-between mb-8">
       <div>
         <p class="font-mono text-[#D4AF37] text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
           <span class="w-1.5 h-1.5 bg-[#D4AF37] animate-pulse"></span>
-          /ADMIN/CONTROL_CENTER
+          /ADMIN/<span id="admin-path-indicator">CONTROL_CENTER</span>
         </p>
-        <h1 class="font-headline text-4xl font-bold text-white tracking-tight">Member Management</h1>
-        <p class="text-gray-500 text-sm mt-1 font-mono">Real-time operative registry. All changes are permanent.</p>
+        <h1 id="admin-main-title" class="font-headline text-4xl font-bold text-white tracking-tight">Member Management</h1>
+        <p id="admin-main-subtitle" class="text-gray-500 text-sm mt-1 font-mono">Real-time operative registry. All changes are permanent.</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div id="admin-header-actions" class="flex items-center gap-3">
         <a th:href="@{/permissions}" class="px-4 py-2.5 border border-white/20 text-white text-xs font-mono uppercase tracking-widest hover:bg-white/5 transition-colors flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">key</span>Permissions
         </a>
@@ -48,16 +58,16 @@
       </div>
     </div>
 
-    <!-- Member Table -->
+    <!-- Content Table -->
     <div class="bg-[#0a0a0a] border border-white/10 overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/30">
+      <div id="admin-table-controls" class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/30">
         <div class="flex items-center gap-3">
           <span class="w-2 h-2 bg-primary animate-pulse rounded-full"></span>
-          <h3 class="text-sm font-headline font-bold uppercase tracking-wider text-white">Member Registry</h3>
-          <span id="member-count-badge" class="px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary font-mono text-[10px] tracking-widest">LOADING...</span>
+          <h3 id="admin-table-title" class="text-sm font-headline font-bold uppercase tracking-wider text-white">Member Registry</h3>
+          <span id="member-count-badge" class="px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary font-mono text-[10px] tracking-widest uppercase">LOADING...</span>
         </div>
-        <div class="flex items-center gap-2">
-          <div class="relative">
+        <div id="admin-table-filters" class="flex items-center gap-2">
+          <div class="relative" id="filter-role-wrap">
             <select id="admin-role-filter" onchange="filterAdminTable(document.getElementById('admin-search').value)" class="data-input w-44 text-[10px] pr-8 cursor-pointer bg-black border border-white/20 hover:border-primary/50 transition-colors uppercase font-mono tracking-widest text-primary">
               <option value="ALL" class="bg-[#131313] text-white">ALL CLEARANCES</option>
               <option value="SUPER ADMIN" class="bg-[#131313] text-white">SUPER ADMIN</option>
@@ -67,15 +77,15 @@
             </select>
           </div>
           <div class="relative">
-            <input type="text" id="admin-search" autocomplete="off" onkeyup="filterAdminTable(this.value)" placeholder="Search operatives..." class="data-input w-56 text-xs pr-8"/>
+            <input type="text" id="admin-search" autocomplete="off" onkeyup="filterAdminTable(this.value)" placeholder="Search registry..." class="data-input w-56 text-xs pr-8"/>
             <span class="material-symbols-outlined absolute right-2 top-2 text-gray-500 text-sm">search</span>
           </div>
         </div>
       </div>
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto min-h-[400px]">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-white/10 bg-black/20">
+            <tr id="admin-table-head" class="border-b border-white/10 bg-black/20">
               <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest">Operative</th>
               <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest hidden md:table-cell">Clearance</th>
               <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest hidden lg:table-cell">Coins</th>
@@ -84,7 +94,7 @@
             </tr>
           </thead>
           <tbody id="admin-table">
-            <tr><td colspan="5" class="px-6 py-12 text-center text-gray-600 font-mono text-xs">Initializing registry scan...</td></tr>
+            <tr><td colspan="5" class="px-6 py-12 text-center text-gray-600 font-mono text-xs">Initializing system scan...</td></tr>
           </tbody>
         </table>
       </div>
