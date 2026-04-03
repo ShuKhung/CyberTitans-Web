@@ -86,9 +86,4 @@ public class WebController {
         return "pages/team";
     }
 
-    @GetMapping("/events")
-    public String events() {
-        return "pages/events";
-    }
-
 }
