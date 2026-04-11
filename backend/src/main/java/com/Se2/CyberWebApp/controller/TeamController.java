@@ -70,16 +70,13 @@ public class TeamController {
         response.put("address", user.getAddress() != null ? user.getAddress() : "UNKNOWN LOCATION");
         response.put("email", user.getEmail() != null ? user.getEmail() : "ENCRYPTED");
         response.put("coin", user.getCoin() != null ? user.getCoin() : 0);
-        response.put("description", ""); // bio field placeholder
+        response.put("description", user.getDescription() != null ? user.getDescription() : "");
+        response.put("tags", user.getTags());
 
-        String description = null;
         String facebook = null;
         String linkedin = null;
-        
         if (experiences != null && !experiences.isEmpty()) {
             UserExperience exp = experiences.get(0);
-            description = exp.getDescription();
-            
             if (exp.getReferenceInfo() != null && exp.getReferenceInfo().contains("|")) {
                 String[] socials = exp.getReferenceInfo().split("\\|");
                 facebook = socials[0].equals("null") ? null : socials[0];
@@ -89,7 +86,6 @@ public class TeamController {
             }
         }
 
-        if (description != null) response.put("description", description);
         if (facebook != null) response.put("facebook", facebook);
         if (linkedin != null) response.put("linkedin", linkedin);
 
@@ -116,6 +112,12 @@ public class TeamController {
         if (updateData.containsKey("email")) {
             user.setEmail(updateData.get("email").toString());
         }
+        if (updateData.containsKey("description")) {
+            user.setDescription(updateData.get("description").toString());
+        }
+        if (updateData.containsKey("tags")) {
+            user.setTags(updateData.get("tags").toString());
+        }
 
         if (updateData.containsKey("coin")) {
             try {
@@ -135,7 +137,7 @@ public class TeamController {
     @PostMapping("/members/{mentorId}/request-mentor")
     public ResponseEntity<?> requestMentor(@PathVariable Integer mentorId, @RequestBody Map<String, Integer> requestData) {
         Integer menteeId = requestData.get("menteeId");
-        int MENTOR_COST = 500; // Đặt giá thuê Mentor là 500 Coins
+        int MENTOR_COST = 500; 
 
         // 1. Transfer coin
         User mentee = userRepository.findById(menteeId).orElse(null);
@@ -159,8 +161,6 @@ public class TeamController {
         mentee.setCoin(mentee.getCoin() - MENTOR_COST);
         userRepository.save(mentee);
 
-        // 5. (Tương lai) Tại đây bạn sẽ lưu 1 dòng vào bảng `Notification` trong DB cho Mentor.
-        // Hiện tại, chúng ta báo giao dịch thành công về cho Frontend.
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Request sent successfully!");

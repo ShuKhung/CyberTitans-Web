@@ -37,7 +37,7 @@ CREATE TABLE `user` (
   `verification_code` varchar(255) DEFAULT NULL,
   `is_enabled` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -46,7 +46,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'Triệu Quang Thiện',NULL,3636366,1,'superadmin1','qqqweasd12345','0941156936','100 Tran Phu, Ha Dong, Ha Noi','bangbong2232@gmail.com',36000,NULL,1),(2,'Mai Tuấn Minh',NULL,1231,1,'admin2','123456','0911223344','200 Nguyen Trai, Thanh Xuan, Ha Noi','minh.mt@cybertitans.com',0,NULL,1),(10,'Ngô Văn Quyền',NULL,15890,1,'nvquyen2404','123456','0912345678','207 Giai Phong, Dong Da, Ha Noi','ngovanquyen@cybertitans.com',0,NULL,1),(11,'Nguyễn Thái Sơn',NULL,12450,1,'thaison','123456','0933445566','1 Dai Co Viet, Hai Ba Trung, Ha Noi','son.nt@cybertitans.com',0,NULL,1),(12,'Vũ Sơn Thái',NULL,11200,4,'sonthai','123456','0977889900','2 Ton That Tung, Dong Da, Ha Noi','thai.vs@cybertitans.com',0,NULL,1),(13,'Đặng Phương Nam',NULL,1200,2,'Cam','123456','0966554433','3 Cau Giay, Cau Giay, Ha Noi','nam.dp@cybertitans.com',0,NULL,1),(16,'Hoàng Thùy Linh',NULL,0,4,'Test','111111','0909112233','4 Pham Van Dong, Bac Tu Liem, Ha Noi','linh.ht@cybertitans.com',100,NULL,1);
+INSERT INTO `user` VALUES (1,'Triệu Quang Thiện',NULL,3636366,1,'superadmin1','qqqweasd12345','0941156936',NULL,'bangbong2232@gmail.com',36000,NULL,1),(2,'Mai Tuấn Minh',NULL,1231,1,'admin2','123456',NULL,NULL,NULL,0,NULL,1),(10,'Ngô Văn Quyền',NULL,15890,1,'nvquyen2404','123456',NULL,NULL,NULL,0,NULL,1),(11,'Nguyễn Thái Sơn',NULL,12450,1,'thaison','123456','11','22','33',0,NULL,1),(12,'Vũ Sơn Thái',NULL,11200,4,'sonthai','123456',NULL,NULL,NULL,0,NULL,1),(13,'Đặng Phương Nam',NULL,1200,2,'Cam','123456','ád',NULL,'ENCRYPTED',0,NULL,1),(16,'QQQQ',NULL,0,4,'Test','111111',NULL,NULL,'123',100,NULL,1);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

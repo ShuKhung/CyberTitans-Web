@@ -1,6 +1,8 @@
 let currentUsers = [];
-let targetUserId = null;
+let currentProjects = [];
+let targetId = null;
 let currentAction = '';
+let activeTab = 'users';
 
 // Get token from both storage options
 function getToken() {
@@ -17,8 +19,7 @@ const ROLE_COLORS = {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('admin-table')) {
-        loadAdminData();
-        setupSearch();
+        switchAdminTab('users'); // Initial load
         setupConfirmBtn();
     }
 });
@@ -34,45 +35,124 @@ function setupConfirmBtn() {
     }
 }
 
+function switchAdminTab(tab) {
+    activeTab = tab;
+    const btnUsers = document.getElementById('tab-users');
+    const btnProjects = document.getElementById('tab-projects');
+    const pathIndicator = document.getElementById('admin-path-indicator');
+    const mainTitle = document.getElementById('admin-main-title');
+    const mainSubtitle = document.getElementById('admin-main-subtitle');
+    const headerActions = document.getElementById('admin-header-actions');
+    const tableTitle = document.getElementById('admin-table-title');
+    const roleFilter = document.getElementById('filter-role-wrap');
+    
+    if (tab === 'users') {
+        btnUsers.classList.add('border-primary', 'text-primary');
+        btnUsers.classList.remove('border-transparent', 'text-gray-500');
+        btnProjects.classList.add('border-transparent', 'text-gray-500');
+        btnProjects.classList.remove('border-primary', 'text-primary');
+        
+        pathIndicator.textContent = 'CONTROL_CENTER';
+        mainTitle.textContent = 'Member Management';
+        mainSubtitle.textContent = 'Real-time operative registry. All changes are permanent.';
+        tableTitle.textContent = 'Member Registry';
+        if (roleFilter) roleFilter.style.display = '';
+        if (headerActions) headerActions.style.display = 'flex';
+        
+        updateTableHeaders('users');
+        loadAdminData();
+    } else {
+        btnProjects.classList.add('border-primary', 'text-primary');
+        btnProjects.classList.remove('border-transparent', 'text-gray-500');
+        btnUsers.classList.add('border-transparent', 'text-gray-500');
+        btnUsers.classList.remove('border-primary', 'text-primary');
+        
+        pathIndicator.textContent = 'PROJECT_APPROVAL';
+        mainTitle.textContent = 'Project Requests';
+        mainSubtitle.textContent = 'Validation required for public deployment.';
+        tableTitle.textContent = 'Pending Requests';
+        if (roleFilter) roleFilter.style.display = 'none';
+        if (headerActions) headerActions.style.display = 'none';
+
+        updateTableHeaders('projects');
+        loadPendingProjects();
+    }
+}
+
+function updateTableHeaders(type) {
+    const head = document.getElementById('admin-table-head');
+    if (!head) return;
+    
+    if (type === 'users') {
+        head.innerHTML = `
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest">Operative</th>
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest hidden md:table-cell">Clearance</th>
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest hidden lg:table-cell">Coins</th>
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest">Status</th>
+            <th class="px-6 py-4 text-right text-[10px] font-mono text-gray-500 uppercase tracking-widest">Actions</th>
+        `;
+    } else {
+        head.innerHTML = `
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest">Project/Team</th>
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest hidden md:table-cell">Tech Stack</th>
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest hidden lg:table-cell">Submission Date</th>
+            <th class="px-6 py-4 text-left text-[10px] font-mono text-gray-500 uppercase tracking-widest">Status</th>
+            <th class="px-6 py-4 text-right text-[10px] font-mono text-gray-500 uppercase tracking-widest">Validation</th>
+        `;
+    }
+}
+
 async function loadAdminData() {
     const tbody = document.getElementById('admin-table');
     try {
         const response = await fetch('/api/v1/admin/users', {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-
-        if (!response.ok) {
-            const errText = `HTTP ${response.status}: ${response.statusText}`;
-            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-error font-mono text-xs">[ACCESS_DENIED] ${errText}</td></tr>`;
-            return;
-        }
-
+        if (!response.ok) throw new Error(response.statusText);
         currentUsers = await response.json();
         renderAdminTable(currentUsers);
-        updateStats(currentUsers);
-
+        updateStats(currentUsers, 'users');
     } catch (error) {
         console.error("Admin error:", error);
-        if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-error font-mono text-xs">[COMMS_FAILURE] Cannot connect to registry server. ${error.message}</td></tr>`;
-        }
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-error font-mono text-xs">[COMMS_FAILURE] ${error.message}</td></tr>`;
     }
 }
 
-function updateStats(users) {
-    const total = users.length;
-    const active = users.filter(u => u.enabled).length;
-    const pending = users.filter(u => !u.enabled).length;
-    const suspended = 0; // Could track separately if needed
+async function loadPendingProjects() {
+    const tbody = document.getElementById('admin-table');
+    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-gray-600 font-mono text-xs">Scanning for pending data...</td></tr>`;
+    try {
+        const response = await fetch('/api/v1/admin/projects/pending', {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!response.ok) throw new Error(response.statusText);
+        currentProjects = await response.json();
+        renderProjectApprovalTable(currentProjects);
+        updateStats(currentProjects, 'projects');
+    } catch (error) {
+        console.error("Project error:", error);
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-error font-mono text-xs">[COMMS_FAILURE] ${error.message}</td></tr>`;
+    }
+}
 
+function updateStats(items, type) {
+    const total = items.length;
     const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-    el('stat-total', total);
-    el('stat-active', active);
-    el('stat-pending', pending);
-    el('stat-suspended', suspended);
-
     const badge = document.getElementById('member-count-badge');
-    if (badge) badge.textContent = `${total} OPERATIVES`;
+    
+    if (type === 'users') {
+        const active = items.filter(u => u.enabled).length;
+        const pending = items.filter(u => !u.enabled).length;
+        el('stat-total', total);
+        el('stat-active', active);
+        el('stat-pending', pending);
+        el('stat-suspended', 0);
+        if (badge) badge.textContent = `${total} OPERATIVES`;
+    } else {
+        el('stat-total', total);
+        el('stat-pending', total); // All incoming projects are pending
+        if (badge) badge.textContent = `${total} REQUESTS`;
+    }
 }
 
 function getRoleClass(role) {
@@ -173,9 +253,56 @@ function renderAdminTable(users) {
                     <button onclick="prepAdminAction(${u.id}, 'PASSWORD')" title="Reset Password" class="p-1.5 text-gray-500 hover:text-white transition-colors rounded">
                         <span class="material-symbols-outlined text-base">lock_reset</span>
                     </button>
-                    <button onclick="prepAdminAction(${u.id}, '${isActive ? 'BAN' : 'UNBAN'}')" title="${isActive ? 'Terminate Access' : 'Restore Access'}" 
-                            class="p-1.5 ${isActive ? 'text-gray-500 hover:text-error' : 'text-gray-500 hover:text-primary'} transition-colors rounded">
-                        <span class="material-symbols-outlined text-base">${isActive ? 'person_off' : 'person_check'}</span>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function renderProjectApprovalTable(projects) {
+    const tbody = document.getElementById('admin-table');
+    if (!tbody) return;
+
+    if (projects.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-gray-600 font-mono text-xs">No pending project requests detected.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = projects.map(p => {
+        const date = p.submittedAt ? new Date(p.submittedAt).toLocaleDateString() : 'N/A';
+        const techStack = p.techStack ? p.techStack.split(',').slice(0, 3).join(', ') : 'N/A';
+        
+        return `<tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-surface-container-highest border border-outline-variant/20 flex items-center justify-center font-mono text-[11px] font-bold text-primary flex-shrink-0">
+                        PR
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-white">${p.name || 'Untitled'}</p>
+                        <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">TEAM: ${p.teamId || 'N/A'}</p>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 hidden md:table-cell">
+                <span class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">${techStack}</span>
+            </td>
+            <td class="px-6 py-4 hidden lg:table-cell">
+                <span class="text-[10px] font-mono text-gray-500 tracking-widest">${date}</span>
+            </td>
+            <td class="px-6 py-4">
+                <span class="flex items-center gap-1.5 font-mono text-[10px] tracking-widest uppercase text-[#D4AF37]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse"></span>
+                    Reviewing
+                </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <div class="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="prepAdminAction(${p.id}, 'APPROVE_PROJECT')" title="Approve Project" class="px-3 py-1 bg-primary/10 border border-primary/30 text-primary font-mono text-[9px] uppercase hover:bg-primary hover:text-black transition-all">
+                        Approve
+                    </button>
+                    <button onclick="prepAdminAction(${p.id}, 'REJECT_PROJECT')" title="Reject Project" class="px-3 py-1 bg-error/10 border border-error/30 text-error font-mono text-[9px] uppercase hover:bg-error hover:text-white transition-all">
+                        Reject
                     </button>
                 </div>
             </td>
@@ -184,16 +311,15 @@ function renderAdminTable(users) {
 }
 
 function filterAdminTable(query) {
-    if (!query) {
-        renderAdminTable(currentUsers);
-        return;
-    }
-    const q = query.toLowerCase();
-    const filtered = currentUsers.filter(u =>
-        (u.name || '').toLowerCase().includes(q) ||
-        (u.username || '').toLowerCase().includes(q) ||
-        (u.role || '').toLowerCase().includes(q)
-    );
+    const q = (query || '').toLowerCase();
+    const roleFilter = document.getElementById('admin-role-filter')?.value || 'ALL';
+    
+    const filtered = currentUsers.filter(u => {
+        const matchesName = (u.name || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q);
+        const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+        return matchesName && matchesRole;
+    });
+    
     renderAdminTable(filtered);
 }
 
@@ -210,8 +336,8 @@ function exportAdminData() {
     showToast('Export complete.', 'success');
 }
 
-function prepAdminAction(userId, action) {
-    targetUserId = userId;
+function prepAdminAction(id, action) {
+    targetId = id;
     currentAction = action;
     const modal = document.getElementById('admin-action-modal');
     const title = document.getElementById('admin-modal-title');
@@ -243,34 +369,49 @@ function prepAdminAction(userId, action) {
         content.innerHTML = `<p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">Target: ${userName}</p>
             <label class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">New Password</label>
             <input type="text" id="reset-new-pass" placeholder="Enter new password" class="${inputClass}">`;
+    } else if (action === 'APPROVE_PROJECT') {
+        const project = currentProjects.find(p => p.id === id);
+        title.textContent = 'AUTHORIZE DEPLOYMENT';
+        content.innerHTML = `<p class="text-gray-400 text-sm leading-relaxed">Confirming validation for <span class="text-primary font-bold">${project?.name}</span>. This project will be moved to the active registry and made visible on the public terminal.</p>
+            <div class="bg-primary/10 border border-primary/20 p-3 font-mono text-[10px] text-primary uppercase tracking-widest">System-wide visibility enabled upon execution.</div>`;
+    } else if (action === 'REJECT_PROJECT') {
+        const project = currentProjects.find(p => p.id === id);
+        title.textContent = 'REJECT SUBMISSION';
+        content.innerHTML = `<p class="text-gray-400 text-sm leading-relaxed">Archiving submission for <span class="text-error font-bold">${project?.name}</span>. The requester will be notified of the rejection.</p>`;
     }
 }
 
 function closeAdminModal() {
     const modal = document.getElementById('admin-action-modal');
     if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
-    targetUserId = null;
+    targetId = null;
     currentAction = '';
 }
 
 async function executeAdminAction() {
-    if (!targetUserId || !currentAction) return;
+    if (!targetId || !currentAction) return;
 
-    let url = `/api/v1/admin/users/${targetUserId}/`;
+    let url = `/api/v1/admin/users/${targetId}/`;
     let body = {};
 
-    if (currentAction === 'BAN') url += 'ban';
-    else if (currentAction === 'UNBAN') url += 'unban';
-    else if (currentAction === 'ECONOMY') {
-        url += 'economy';
-        const val = document.getElementById('economy-amount')?.value;
-        if (!val) return showToast('Amount is required.', 'error');
-        body = { amount: parseInt(val) };
-    } else if (currentAction === 'PASSWORD') {
-        url += 'reset-password';
-        const val = document.getElementById('reset-new-pass')?.value;
-        if (!val) return showToast('Password is required.', 'error');
-        body = { newPassword: val };
+    if (activeTab === 'users') {
+        if (currentAction === 'BAN') url += 'ban';
+        else if (currentAction === 'UNBAN') url += 'unban';
+        else if (currentAction === 'ECONOMY') {
+            url += 'economy';
+            const val = document.getElementById('economy-amount')?.value;
+            if (!val) return showToast('Amount is required.', 'error');
+            body = { amount: parseInt(val) };
+        } else if (currentAction === 'PASSWORD') {
+            url += 'reset-password';
+            const val = document.getElementById('reset-new-pass')?.value;
+            if (!val) return showToast('Password is required.', 'error');
+            body = { newPassword: val };
+        }
+    } else {
+        url = `/api/v1/admin/projects/${targetId}/`;
+        if (currentAction === 'APPROVE_PROJECT') url += 'approve';
+        else if (currentAction === 'REJECT_PROJECT') url += 'reject';
     }
 
     try {
@@ -288,7 +429,8 @@ async function executeAdminAction() {
         if (response.ok) {
             showToast(result.message, 'success');
             closeAdminModal();
-            loadAdminData(); // Refresh list
+            if (activeTab === 'users') loadAdminData();
+            else loadPendingProjects();
         } else {
             showToast(result.message || 'SYSTEM FAILURE', 'error');
         }

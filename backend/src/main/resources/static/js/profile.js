@@ -24,6 +24,13 @@ async function loadOperativeData() {
             if (phoneInput) phoneInput.value = user.phone || '';
             if (document.getElementById('input-bio')) document.getElementById('input-bio').value = user.description || '';
 
+            // Specialization Data Fix
+            const tagsInput = document.getElementById('input-tags');
+            if (tagsInput) {
+                tagsInput.value = user.tags || '';
+                renderUserTags(user.tags || '');
+            }
+
             // Show actual role from DB
             const roleEl = document.getElementById('profile-role');
             if (roleEl) roleEl.innerText = user.role || currentUser.role || 'MENTEE';
@@ -35,6 +42,206 @@ async function loadOperativeData() {
             }
         } else if (response.status === 403 || response.status === 401) { logout(); }
     } catch (error) { console.error("[SYSTEM] Error loading user data:", error); }
+
+    // Load Professional Records
+    loadExperiences();
+}
+
+function renderUserTags(tagsStr) {
+    const wrapper = document.getElementById('tags-wrapper');
+    if (!wrapper) return;
+
+    const tags = tagsStr.split(',').filter(t => t.trim());
+    const addBtn = wrapper.querySelector('button');
+
+    // Clear current tags (except the Add button)
+    wrapper.innerHTML = '';
+
+    tags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'px-3 py-1 bg-primary/20 text-primary border border-primary/30 text-[11px] font-mono flex items-center gap-2';
+        span.innerHTML = `
+            ${tag.trim()}
+            <button type="button" onclick="removeUserTag('${tag.trim()}')" class="hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-[12px]">close</span>
+            </button>
+        `;
+        wrapper.appendChild(span);
+    });
+
+    if (addBtn) wrapper.appendChild(addBtn);
+}
+
+function promptAddTag() {
+    const tag = prompt("Enter new specialization tag (e.g. Java, Python, Security):");
+    if (!tag || !tag.trim()) return;
+
+    const input = document.getElementById('input-tags');
+    const currentTags = input.value ? input.value.split(',').filter(t => t.trim()) : [];
+
+    if (currentTags.includes(tag.trim())) return showToast("Tag already exists.", "error");
+
+    currentTags.push(tag.trim());
+    input.value = currentTags.join(',');
+    renderUserTags(input.value);
+}
+
+function removeUserTag(tag) {
+    const input = document.getElementById('input-tags');
+    const currentTags = input.value.split(',').filter(t => t.trim() && t.trim() !== tag);
+    input.value = currentTags.join(',');
+    renderUserTags(input.value);
+}
+
+// --- EXPERIENCE MANAGEMENT PROTOCOL ---
+let userExperiences = [];
+
+async function loadExperiences() {
+    const token = sessionStorage.getItem('cyber_token') || localStorage.getItem('cyber_token');
+    const listEl = document.getElementById('experience-list');
+    if (!listEl || !token) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/experience/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            userExperiences = await response.json();
+            renderExperienceList();
+        }
+    } catch (error) { console.error("[SYSTEM] Error loading experiences:", error); }
+}
+
+function renderExperienceList() {
+    const listEl = document.getElementById('experience-list');
+    if (userExperiences.length === 0) {
+        listEl.innerHTML = '<p class="text-[10px] font-mono text-on-surface-variant/40 uppercase tracking-widest italic">No professional records found. Initialize your history to optimize your profile.</p>';
+        return;
+    }
+
+    listEl.innerHTML = userExperiences.map(exp => `
+        <div class="bg-white/5 border border-white/10 p-5 group hover:border-primary/40 transition-all">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h4 class="text-white font-bold text-lg">${exp.organizationName}</h4>
+                    <p class="text-primary font-mono text-[10px] uppercase tracking-widest mt-1">${exp.positionTitle}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openExperienceModal(${exp.id})" class="p-2 bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                    <button onclick="deleteExperience(${exp.id})" class="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-all border border-red-500/20">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-[10px] font-mono text-on-surface-variant mb-4 uppercase">
+                <span class="material-symbols-outlined text-xs">calendar_today</span>
+                ${exp.startDate} — ${exp.endDate || 'PRESENT'}
+                <span class="mx-2 text-white/10">|</span>
+                <span class="${exp.type === 'PROJECT' ? 'text-tertiary' : 'text-secondary'} font-bold">${exp.type}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                ${(exp.tags || '').split(',').filter(t => t.trim()).map(tag => `
+                    <span class="px-2 py-0.5 bg-black border border-white/10 text-[9px] font-mono text-on-surface-variant">${tag.trim()}</span>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function openExperienceModal(id = null) {
+    const modal = document.getElementById('experience-modal');
+    const title = document.getElementById('exp-modal-title');
+    const idInput = document.getElementById('exp-id');
+
+    // Clear fields
+    idInput.value = id || '';
+    document.getElementById('exp-org').value = '';
+    document.getElementById('exp-title').value = '';
+    document.getElementById('exp-start').value = '';
+    document.getElementById('exp-end').value = '';
+    document.getElementById('exp-type').value = 'JOB';
+    document.getElementById('exp-tags').value = '';
+
+    if (id) {
+        title.innerText = "// EDIT RECORD";
+        const exp = userExperiences.find(e => e.id === id);
+        if (exp) {
+            document.getElementById('exp-org').value = exp.organizationName || '';
+            document.getElementById('exp-title').value = exp.positionTitle || '';
+            document.getElementById('exp-start').value = exp.startDate || '';
+            document.getElementById('exp-end').value = exp.endDate || '';
+            document.getElementById('exp-type').value = exp.type || 'JOB';
+            document.getElementById('exp-tags').value = exp.tags || '';
+        }
+    } else {
+        title.innerText = "// ADD RECORD";
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeExperienceModal() {
+    document.getElementById('experience-modal').classList.add('hidden');
+}
+
+async function saveExperience() {
+    const token = sessionStorage.getItem('cyber_token') || localStorage.getItem('cyber_token');
+    const id = document.getElementById('exp-id').value;
+
+    const payload = {
+        organizationName: document.getElementById('exp-org').value,
+        positionTitle: document.getElementById('exp-title').value,
+        startDate: document.getElementById('exp-start').value,
+        endDate: document.getElementById('exp-end').value,
+        type: document.getElementById('exp-type').value,
+        tags: document.getElementById('exp-tags').value
+    };
+
+    if (!payload.organizationName || !payload.positionTitle || !payload.startDate) {
+        return showToast("Critical fields missing: Name, Title, and Start Date are required.", "error");
+    }
+
+    try {
+        const url = id ? `${API_BASE_URL}/experience/${id}` : `${API_BASE_URL}/experience`;
+        const method = id ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            showToast("Record synchronized successfully.", "success");
+            closeExperienceModal();
+            loadExperiences(); // Refresh list
+        } else {
+            showToast("Failed to synchronize record.", "error");
+        }
+    } catch (error) { showToast("Server connection error.", "error"); }
+}
+
+async function deleteExperience(id) {
+    if (!confirm("⚠️ WARNING: Permanent deletion initiated. Are you sure?")) return;
+
+    const token = sessionStorage.getItem('cyber_token') || localStorage.getItem('cyber_token');
+    try {
+        const response = await fetch(`${API_BASE_URL}/experience/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            showToast("Record terminated and deleted.", "success");
+            loadExperiences();
+        } else {
+            showToast("Deletion failed.", "error");
+        }
+    } catch (error) { showToast("Server connection error.", "error"); }
 }
 
 async function saveAccountProfile() {
@@ -43,9 +250,52 @@ async function saveAccountProfile() {
     if (!savedUserStr || !token) return showToast('Lỗi: Phiên đăng nhập hết hạn!', 'error');
 
     const currentUser = JSON.parse(savedUserStr);
+
+    // Validation
+    const nameInput = document.getElementById('input-name');
+    const emailInput = document.getElementById('input-email');
+    const phoneInput = document.getElementById('input-phone');
+
+    const errName = document.getElementById('error-input-name');
+    const errEmail = document.getElementById('error-input-email');
+    const errPhone = document.getElementById('error-input-phone');
+
+    if (errName) errName.classList.add('hidden');
+    if (errEmail) errEmail.classList.add('hidden');
+    if (errPhone) errPhone.classList.add('hidden');
+
+    let hasError = false;
+
+    if (!/^[a-zA-Z\s\-À-ỹ]+$/.test(nameInput.value.trim())) {
+        if (errName) {
+            errName.textContent = 'Invalid full name.';
+            errName.classList.remove('hidden');
+        }
+        hasError = true;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+        if (errEmail) {
+            errEmail.textContent = 'Invalid email format.';
+            errEmail.classList.remove('hidden');
+        }
+        hasError = true;
+    }
+
+    if (!/^\d+$/.test(phoneInput.value.trim())) {
+        if (errPhone) {
+            errPhone.textContent = 'Phone must contain only numbers.';
+            errPhone.classList.remove('hidden');
+        }
+        hasError = true;
+    }
+
+    if (hasError) return;
+
     const payload = {
-        name: document.getElementById('input-name').value, email: document.getElementById('input-email').value,
-        phone: document.getElementById('input-phone').value, description: document.getElementById('input-bio').value
+        name: nameInput.value, email: emailInput.value,
+        phone: phoneInput.value, description: document.getElementById('input-bio').value,
+        tags: document.getElementById('input-tags').value
     };
 
     try {
@@ -62,6 +312,48 @@ async function saveAccountProfile() {
             applyLoginState(currentUser);
         } else { showToast('Lỗi: Không có quyền sửa.', 'error'); }
     } catch (error) { showToast('Lỗi Server.', 'error'); }
+}
+
+// --- PASSWORD UPDATE PROTOCOL ---
+async function submitChangePassword() {
+    const oldPass = document.getElementById('old-pass').value;
+    const newPass = document.getElementById('new-pass').value;
+    const savedUserStr = sessionStorage.getItem('cyber_user') || localStorage.getItem('cyber_user');
+
+    if (!savedUserStr) return showToast("Session expired. Please log in again.", "error");
+    if (!oldPass || !newPass) return showToast("Both current and new keys are required.", "error");
+
+    const currentUser = JSON.parse(savedUserStr);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: currentUser.username,
+                oldPassword: oldPass,
+                newPassword: newPass
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast("Security key synchronization successful.", "success");
+            closePassModal();
+            // Clear inputs
+            document.getElementById('old-pass').value = '';
+            document.getElementById('new-pass').value = '';
+        } else {
+            showToast(`SYNC DENIED: ${data.message}`, "error");
+        }
+    } catch (error) {
+        showToast("SIGNAL LOST: Server unreachable.", "error");
+    }
+}
+
+function closePassModal() {
+    closeModal('password-modal');
 }
 
 async function openProfileModal(id) {
@@ -86,8 +378,7 @@ async function openProfileModal(id) {
 
         const savedUserStr = sessionStorage.getItem('cyber_user') || localStorage.getItem('cyber_user');
         const currentUser = JSON.parse(savedUserStr);
-        // Correctly handle viewing role parsing (could be from token or string)
-        const viewerRole = (currentUser.role || '').toUpperCase();
+        const viewerRole = currentUser.role;
 
         let actionButtonsHTML = '';
 
@@ -106,13 +397,6 @@ async function openProfileModal(id) {
                     MESSAGE
                 </button>`;
 
-            // Check for admin role
-            if (viewerRole === 'ADMIN' || viewerRole === 'SUPER ADMIN' || viewerRole === 'SUPERADMIN' || viewerRole === '1' || viewerRole === '2') {
-                actionButtonsHTML += `
-                <button onclick="adminDeleteUser(${user.id})" class="w-full bg-red-600/10 border border-red-500/30 text-red-500 font-bold font-mono tracking-widest py-3.5 hover:bg-red-600/20 transition-all text-[11px]">
-                    [ADMIN] TERMINATE OPERATIVE
-                </button>`;
-            }
         }
 
         // Configure Avatar and Initials
