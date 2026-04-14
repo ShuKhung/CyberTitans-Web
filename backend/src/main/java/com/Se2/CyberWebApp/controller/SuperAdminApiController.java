@@ -1,15 +1,19 @@
 package com.Se2.CyberWebApp.controller;
 
 import com.Se2.CyberWebApp.entity.ClubEvent;
+import com.Se2.CyberWebApp.entity.Project;
 import com.Se2.CyberWebApp.repository.ClubEventRepository;
 import com.Se2.CyberWebApp.entity.Announcement;
 import com.Se2.CyberWebApp.repository.AnnouncementRepository;
+import com.Se2.CyberWebApp.service.ProjectService;
 import com.Se2.CyberWebApp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/super-admin")
@@ -24,6 +28,9 @@ public class SuperAdminApiController {
 
     @Autowired
     private AnnouncementRepository announcementRepository;
+
+    @Autowired
+    private ProjectService projectService;
 
     @PostMapping("/users/{id}/role")
     public ResponseEntity<?> updateUserRole(@PathVariable Integer id, @RequestBody Map<String, String> request) {
@@ -48,7 +55,7 @@ public class SuperAdminApiController {
             return ResponseEntity.badRequest().body(Map.of("message", "Event title is required."));
         }
         clubEventRepository.save(event);
-        
+
         // Auto-generate notification
         Announcement notif = new Announcement(
                 "New Event: " + event.getTitle(),
@@ -82,5 +89,41 @@ public class SuperAdminApiController {
         }
         clubEventRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Event deleted successfully."));
+    }
+
+    // --- PROJECT DELETION MANAGEMENT (Super Admin Only) ---
+
+    /** Fetch all projects with PENDING_DELETE status (status = 3). */
+    @GetMapping("/projects/pending-delete")
+    public ResponseEntity<List<Map<String, Object>>> getPendingDeleteProjects() {
+        List<Project> pendingDelete = projectService.getPendingDeleteProjects();
+        List<Map<String, Object>> response = pendingDelete.stream().map(p -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", p.getId());
+            map.put("name", p.getName());
+            map.put("slug", p.getSlug());
+            map.put("techStack", p.getTechnologies());
+            map.put("teamId", p.getTeamId());
+            map.put("githubUrl", p.getGithubUrl());
+            map.put("views", p.getViews());
+            map.put("ratingAvg", p.getRatingAvg());
+            map.put("requestedAt", p.getUpdatedAt());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    /** Super Admin confirms deletion — permanently removes the project. */
+    @PostMapping("/projects/{id}/confirm-delete")
+    public ResponseEntity<?> confirmDeleteProject(@PathVariable Integer id) {
+        projectService.deleteProject(id);
+        return ResponseEntity.ok(Map.of("message", "Project permanently deleted. All records purged."));
+    }
+
+    /** Super Admin cancels deletion — reverts project back to active (status = 1). */
+    @PostMapping("/projects/{id}/cancel-delete")
+    public ResponseEntity<?> cancelDeleteProject(@PathVariable Integer id) {
+        projectService.updateProjectStatus(id, (short) 1);
+        return ResponseEntity.ok(Map.of("message", "Deletion request cancelled. Project restored to active status."));
     }
 }
